@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * RedBeanPHP for ProcessWire
+ *
+ * This module is a very light-weight loader for RedBeanPHP ORM.
+ * 
+ * @copyright Copyright (c) 2015, Teppo Koivula
+ * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License, version 2
+ * 
+ * RedBeanPHP Easy ORM for PHP (c) 2015 Gabor de Mooij (gabor@redbeanphp.com)
+ * and the RedBeanPHP community (http://www.redbeanphp.com/credits). Licensed
+ * under New BSD and GPLv2 (dual license).
+ */
+
+class RedBeanPHP extends WireData implements Module, ConfigurableModule {
+    
+    /**
+     * Initialize the module
+     * 
+     * Load and setup the RedBeanPHP ORM.
+     */
+    public function init() {
+        require_once(dirname(__FILE__) . '/RedBeanPHP/rb.php');
+        $dsn = "mysql:dbname={$this->config->dbName}";
+		if ($this->config->dbSocket) {
+			$dsn .= ";unix_socket={$this->config->dbSocket}";
+		} else {
+			$dsn .= ";host={$this->config->dbHost}";
+			if ($this->config->dbPort) $dsn .= ";port={$this->config->dbPort}";
+		}
+        R::setup($dsn, $this->config->dbUser, $this->config->dbPass);
+        $this->setAutoResolve($this->autoResolve);
+        $this->freeze($this->freeze);
+    }
+
+    /**
+     * Enable or disable auto-resolving fetch types
+     * 
+     * @return RedBeanPHP
+     */
+    public function setAutoResolve($state = true) {
+        R::setAutoResolve((boolean) $state);
+        return $this;
+    }
+    
+    /**
+     * Enable or disable frozen mode
+     * 
+     * @return RedBeanPHP
+     */
+    public function freeze($state = true) {
+        R::freeze((boolean) $state);
+        return $this;
+    }
+    
+}

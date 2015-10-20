@@ -1,8 +1,10 @@
 <?php
 
 /**
- * Module info file for the RedBeanPHP module
+ * Info file for RedBeanPHP module
  * 
+ * @copyright Copyright (c) 2015, Teppo Koivula
+ * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License, version 2
  */
 
 $info = array(

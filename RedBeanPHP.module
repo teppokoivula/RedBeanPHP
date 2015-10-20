@@ -23,12 +23,12 @@ class RedBeanPHP extends WireData implements Module, ConfigurableModule {
     public function init() {
         require_once(dirname(__FILE__) . '/RedBeanPHP/rb.php');
         $dsn = "mysql:dbname={$this->config->dbName}";
-		if ($this->config->dbSocket) {
-			$dsn .= ";unix_socket={$this->config->dbSocket}";
-		} else {
-			$dsn .= ";host={$this->config->dbHost}";
-			if ($this->config->dbPort) $dsn .= ";port={$this->config->dbPort}";
-		}
+        if ($this->config->dbSocket) {
+            $dsn .= ";unix_socket={$this->config->dbSocket}";
+        } else {
+            $dsn .= ";host={$this->config->dbHost}";
+            if ($this->config->dbPort) $dsn .= ";port={$this->config->dbPort}";
+        }
         R::setup($dsn, $this->config->dbUser, $this->config->dbPass);
         $this->setAutoResolve($this->autoResolve);
         $this->freeze($this->freeze);

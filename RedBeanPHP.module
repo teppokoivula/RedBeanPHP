@@ -1,56 +1,200 @@
-<?php
+<?php namespace ProcessWire;
 
 /**
  * RedBeanPHP for ProcessWire
  *
- * This module is a very light-weight loader for RedBeanPHP ORM.
+ * This module is a very light-weight loader for RedBeanPHP ORM. See RedBeanPHPConfig class for
+ * related configuration settings.
  * 
- * @copyright Copyright (c) 2015, Teppo Koivula
+ * @copyright 2015-2019 Teppo Koivula
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License, version 2
  * 
- * RedBeanPHP Easy ORM for PHP (c) 2015 Gabor de Mooij (gabor@redbeanphp.com)
- * and the RedBeanPHP community (http://www.redbeanphp.com/credits). Licensed
- * under New BSD and GPLv2 (dual license).
+ * RedBeanPHP Easy ORM for PHP (c) 2018 Gabor de Mooij (gabordemooij@gaborsoftware.nl) and the
+ * RedBeanPHP community (https://www.redbeanphp.com/index.php?p=/credits). Licensed under New
+ * BSD and GPLv2 (dual license).
  */
-
 class RedBeanPHP extends WireData implements Module, ConfigurableModule {
+
+    /**
+     * Autoload
+     *
+     * This setting defines whether the emodule should be automatically loaded (initiated) runtime.
+     *
+     * @var bool
+     */
+    protected $autoload = true;
     
+    /**
+     * Setup default connection based on site config?
+     *
+     * This property is modified by module config and defines if RedbeanPHP should be automatically
+     * reuse ProcessWire's config settings for default database connection.
+     *
+     * @var bool
+     */
+    protected $autoSetup = true;
+
+    /**
+     * Auto-resolving fetch types
+     *
+     * This settings defines whether RedBeanPHP should use automatic resolvement of aliased parent
+     * beans.
+     *
+     * @var bool
+     */
+    protected $autoResolve = true;
+
+    /**
+     * Frozen mode
+     *
+     * In fluid mode database structure is auto-adjusted to accommodate your objects, which makes
+     * development easier. Frozen mode "freezes" current database schema.
+     *
+     * @var bool
+     */
+    protected $freeze = true;
+
+    /**
+     * Database driver
+     *
+     * RedBeanPHP comes with multiple database driver options. With this settings you can choose
+     * whether to load the version that supports all of them, or a limited version. The limited
+     * versions are a bit more efficient, though in most cases the difference is negligible.
+     *
+     * Supported values:
+     *
+     * - '' (blank) for all drivers
+     * - 'mysql' for MySQL driver only
+     * - 'postgres' for PostgreSQL driver only
+     * - 'sqlite' for SQLite driver only
+     *
+     * @var string
+     */
+    protected $databaseDriver = '';
+
+    /**
+     * Valid database drivers
+     *
+     * @var array
+     */
+    protected $databaseDrivers = [
+        'mysql',
+        'postgres',
+        'sqlite',
+    ];
+
     /**
      * Initialize the module
      * 
      * Load and setup the RedBeanPHP ORM.
      */
     public function init() {
-        require_once(dirname(__FILE__) . '/RedBeanPHP/rb.php');
-        $dsn = "mysql:dbname={$this->config->dbName}";
-        if ($this->config->dbSocket) {
-            $dsn .= ";unix_socket={$this->config->dbSocket}";
-        } else {
-            $dsn .= ";host={$this->config->dbHost}";
-            if ($this->config->dbPort) $dsn .= ";port={$this->config->dbPort}";
+
+        // figure out which RedBeanPHP file to load – and then load it
+        $rbDriverSuffix = $this->databaseDriver ? '-' . $this->databaseDriver : '';
+        $rbFile = __DIR__ . '/RedBeanPHP/rb' . $rbDriverSuffix . '.php';
+        require_once $rbFile;
+
+        // set up database connection
+        if ($this->autoSetup) {
+            $this->setup(
+                'config',
+                $this->config->dbUser,
+                $this->config->dbPass,
+                $this->freeze
+            );
         }
-        R::setup($dsn, $this->config->dbUser, $this->config->dbPass);
+        
+        // set RedBeanPHP auto-resolve setting
         $this->setAutoResolve($this->autoResolve);
-        $this->freeze($this->freeze);
+        
+    }
+    
+    /**
+     * Setup RedBeanPHP
+     *
+     * This method sets up the default connection using database credentials found from site config.
+     * Note that RedBeanPHP won't actually connect to the database until the first time you attempt
+     * to access it.
+     *
+     * @param string $dsn Database connection string (dsn). If you provide string 'config', this is generated based on site config.
+     * @param string $username Optional database username.
+     * @param string $password Optional database password.
+     * @param bool $frozen Set to true if you want to setup in frozen mode.
+     * @return RedBeanPHP Self-reference.
+     */
+    public function setup($dsn = null, $username = null, $password = null, $frozen = false) {
+
+        // define database connection string (dsn)
+        if ($dsn == 'config') {
+            $dsn = "mysql:dbname={$this->config->dbName}";
+            if ($this->config->dbSocket) {
+                $dsn .= ";unix_socket={$this->config->dbSocket}";
+            } else {
+                $dsn .= ";host={$this->config->dbHost}";
+                if ($this->config->dbPort) {
+                    $dsn .= ";port={$this->config->dbPort}";
+                }
+            }
+        }
+
+        // setup RedBeanPHP
+        \R::setup(
+            $dsn,
+            $username,
+            $password,
+            $frozen
+        );
+
+        return $this;
+        
     }
 
     /**
      * Enable or disable auto-resolving fetch types
-     * 
-     * @return RedBeanPHP
+     *
+     * @param bool $state State, defaults to true.
+     * @return RedBeanPHP Self-reference.
      */
     public function setAutoResolve($state = true) {
-        R::setAutoResolve((boolean) $state);
+        \R::setAutoResolve((bool) $state);
         return $this;
     }
     
     /**
      * Enable or disable frozen mode
-     * 
-     * @return RedBeanPHP
+     *
+     * @param bool $state State, defaults to true.
+     * @return RedBeanPHP Self-reference.
      */
     public function freeze($state = true) {
-        R::freeze((boolean) $state);
+        \R::freeze((bool) $state);
+        return $this;
+    }
+
+    /**
+     * Setter method for config settings
+     *
+     * @param string $key Name of property.
+     * @param mixed $value Value for property.
+     * @return RedBeanPHP Self-reference.
+     */
+    public function __set($key, $value) {
+        switch ($key) {
+            case 'autoload':
+            case 'autoSetup':
+            case 'autoResolve':
+            case 'freeze':
+                $this->$key = (bool) $value;
+                break;
+            case 'databaseDriver':
+                if (is_string($value) && ($value == '' || in_array($this->databaseDrivers, $value))) {
+                    $this->$key = $value;
+                }
+                break;
+            default:
+                parent::set($key, $value);
+        }
         return $this;
     }
     

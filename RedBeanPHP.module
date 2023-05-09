@@ -6,7 +6,7 @@
  * This module is a very light-weight loader for RedBeanPHP ORM. See RedBeanPHPConfig class for
  * related configuration settings.
  * 
- * @copyright 2015-2019 Teppo Koivula
+ * @copyright 2015-2023 Teppo Koivula
  * @license http://www.gnu.org/licenses/gpl-2.0.txt GNU General Public License, version 2
  * 
  * RedBeanPHP Easy ORM for PHP (c) 2018 Gabor de Mooij (gabordemooij@gaborsoftware.nl) and the

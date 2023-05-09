@@ -9,7 +9,7 @@
 
 $info = [
     'title' => 'RedBeanPHP',
-    'version' => '2.0.0',
+    'version' => '2.0.1',
     'author' => 'Teppo Koivula',
     'summary' => 'Light-weight loader for the RedBeanPHP ORM',
     'requires' => [
